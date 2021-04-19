@@ -40,7 +40,7 @@ router.post("/register", mw.checkUsernameFree, mw.checkPasswordLength, (req,res,
   }
  */
 
-router.post("/login", async (req,res,next) => {
+router.post("/login", mw.checkUsernameExists, async (req,res,next) => {
   const {username, password} = req.body
 
   const [user] = await findBy({username})
