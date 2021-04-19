@@ -1,16 +1,16 @@
 // Require `checkUsernameFree`, `checkUsernameExists` and `checkPasswordLength`
 // middleware functions from `auth-middleware.js`. You will need them here!
 const router = require("express").Router()
+const Users = require("./../users/users-model")
 const mw = require("./auth-middleware")
 const bcrypt = require("bcryptjs")
-const { add, findBy } = require("./../users/users-model")
 
-router.post("/register", mw.checkUsernameFree, mw.checkPasswordLength, (req,res,next) => {
+router.post("/register", mw.checkPasswordLength, mw.checkUsernameFree, (req,res,next) => {
   const { username, password } = req.body
 
   const hash = bcrypt.hashSync(password, 8)
 
-  add({username, password: hash})
+  Users.add({username, password: hash})
     .then(user => {
       res.status(201).json(user)
     })
@@ -41,9 +41,9 @@ router.post("/register", mw.checkUsernameFree, mw.checkPasswordLength, (req,res,
  */
 
 router.post("/login", mw.checkUsernameExists, async (req,res,next) => {
-  const {username, password} = req.body
+  const { username, password } = req.body
 
-  const [user] = await findBy({username})
+  const [user] = await Users.findBy({username})
 
   if(user && bcrypt.compareSync(password, user.password)){
     req.session.user = user
@@ -72,13 +72,13 @@ router.get("/logout", (req,res,next) => {
   if(req.session.user){
     req.session.destroy(err => {
       if(err){
-        next({message: "no session"})
+        next(err)
       }else{
         res.json({message: "logged out"})
       }
     })
   } else {
-    next({message: "you are not logged in", status: 404})
+    next({message: "no session"})
   }
 })
 
